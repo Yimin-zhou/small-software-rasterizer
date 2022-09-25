@@ -1,7 +1,5 @@
 ﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(499,5): warning MSB8004: Intermediate Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Intermediate Directory.
 C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(500,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
-  draw.cpp
-D:\Programming\CG\small-software-rasterizer\small-software-rasterizer\small-software-rasterizer\rasterizer\src\draw.cpp(18,15): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
   main.cpp
 D:\Programming\CG\small-software-rasterizer\small-software-rasterizer\small-software-rasterizer\rasterizer\src\main.cpp(22,11): warning C4244: 'initializing': conversion from 't' to 'int', possible loss of data
           with
@@ -23,5 +21,4 @@ D:\Programming\CG\small-software-rasterizer\small-software-rasterizer\small-soft
           [
               t=float
           ]
-  Generating Code...
   rasterizer.vcxproj -> D:\Programming\CG\small-software-rasterizer\small-software-rasterizer\small-software-rasterizer\bin\Win32\rasterizer.exe
