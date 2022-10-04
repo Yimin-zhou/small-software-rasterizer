@@ -1,6 +1,7 @@
 #pragma once
 #include <tgaimage.h>
 #include "geometry.h"
+#include <vector>
 
 class Draw
 {
@@ -10,6 +11,7 @@ public:
 	// draw triangles method 1
 	static void drawTriangleSweeping(Vec2i v0, Vec2i v1, Vec2i v2, TGAImage& image, const TGAColor& color);
 	// draw triangles method 1
+	static Vec3f barycentric(std::vector<Vec2i> vertecies, Vec2i p);
 	static void drawTriangle(Vec2i v0, Vec2i v1, Vec2i v2, TGAImage& image, const TGAColor& color);
 private:
 	// Disallow creating an instance of this object

@@ -155,6 +155,7 @@
   <ItemGroup>
     <ClInclude Include="include\draw.h" />
     <ClInclude Include="include\geometry.h" />
+    <ClInclude Include="include\helper.h" />
     <ClInclude Include="include\model.h" />
     <ClInclude Include="include\render.h" />
     <ClInclude Include="include\tgaimage.h" />
