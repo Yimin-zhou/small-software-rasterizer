@@ -11,7 +11,7 @@ public:
 	// draw triangles method 1
 	static void drawTriangleSweeping(Vec2f v0, Vec2f v1, Vec2f v2, TGAImage& image, const TGAColor& color);
 	// draw triangles method 1
-	static void drawTriangle(Vec3f v0, Vec3f v1, Vec3f v2, TGAImage& image, const TGAColor& color, float* zBuffer);
+	static void drawTriangle(Vec3f* pts, TGAImage& image, const TGAColor& color, float* zBuffer);
 
 	// depth
 	// ybuffer (2D test)

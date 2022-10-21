@@ -15,7 +15,7 @@ namespace Helper
 	}
 
 
-	inline Vec3f barycentric(std::vector<Vec3f> vertecies, Vec3f p)
+	inline Vec3f barycentric(Vec3f* vertecies, Vec3f p)
 	{
 		Vec3f s[2];
 		for (int i = 2; i--; )

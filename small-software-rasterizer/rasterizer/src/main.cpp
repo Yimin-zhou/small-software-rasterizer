@@ -18,33 +18,27 @@ void drawHeadLight(Render& render)
 {
 	// load .obj
 	Model model = Model("D:/Programming/CG/small-software-rasterizer/small-software-rasterizer/small-software-rasterizer/rasterizer/resources/head.obj");
-	Vec3f light_dir(0, 0, -1); // define light_dir
 
+	float* zbuffer = new float[width * height];
+	for (int i = width * height; i--; zbuffer[i] = -std::numeric_limits<float>::max());
+
+	Vec3f light_dir(0, 0, -1); // define light_dir
 	for (int i = 0; i < model.nfaces(); i++)
 	{
 		std::vector<int> face = model.face(i);
-		Vec3f screen_coords[3];
+		Vec3f pts[3];
 		Vec3f world_coords[3];
-		for (int j = 0; j < 3; j++)
+		for (int i = 0; i < 3; i++)
 		{
-			Vec3f v = model.vert(face[j]);
-			screen_coords[j] = Vec3f(int((v.x + 1.) * width / 2. + .5), int((v.y + 1.) * height / 2. + .5), v.z);
-			world_coords[j] = v;
+			world_coords[i] = model.vert(face[i]);
+			pts[i] = world2screen(model.vert(face[i]));
 		}
 		// cross product to get normal
 		Vec3f n = cross((world_coords[2] - world_coords[0]), (world_coords[1] - world_coords[0]));
 		n.normalize();
 		// dot product
 		float intensity = n * light_dir;
-		if (intensity > 0)
-		{
-			// use zbuffer
-			float* zBuffer = new float[width * height];
-			for (int i = width * height; i--; zBuffer[i] = (-std::numeric_limits<float>::max()));
-
-			Draw::drawTriangle(screen_coords[0], screen_coords[1], screen_coords[2], 
-				render.renderImage, TGAColor(intensity * 255, intensity * 255, intensity * 255, 255), zBuffer);
-		}
+		Draw::drawTriangle(pts, render.renderImage, TGAColor(intensity * 255, intensity * 255, intensity * 255, 255), zbuffer);
 	}
 }
 
