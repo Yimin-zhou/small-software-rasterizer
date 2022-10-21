@@ -2,15 +2,17 @@
 #include <helper.h>
 
 
-void Draw::drawLine(Vec2i v0, Vec2i v1, TGAImage& image, const TGAColor& color)
+void Draw::drawLine(Vec2f v0, Vec2f v1, TGAImage& image, const TGAColor& color)
 {
     bool steep = false;
-    if (std::abs(v0.x - v1.x) < std::abs(v0.y - v1.y)) {
+    if (std::abs(v0.x - v1.x) < std::abs(v0.y - v1.y)) 
+    {
         std::swap(v0.x, v0.y);
         std::swap(v1.x, v1.y);
         steep = true;
     }
-    if (v0.x > v1.x) {
+    if (v0.x > v1.x) 
+    {
         std::swap(v0.x, v1.x);
         std::swap(v0.y, v1.y);
     }
@@ -27,7 +29,7 @@ void Draw::drawLine(Vec2i v0, Vec2i v1, TGAImage& image, const TGAColor& color)
     }
 }
 
-void Draw::drawTriangleSweeping(Vec2i v0, Vec2i v1, Vec2i v2, TGAImage& image, const TGAColor& color)
+void Draw::drawTriangleSweeping(Vec2f v0, Vec2f v1, Vec2f v2, TGAImage& image, const TGAColor& color)
 {
     // method 1 sweeping
     // how to fill triangles
@@ -73,49 +75,60 @@ void Draw::drawTriangleSweeping(Vec2i v0, Vec2i v1, Vec2i v2, TGAImage& image, c
     }
 }
 
-Vec3f Draw::barycentric(std::vector<Vec2i> vertecies, Vec2i p)
-{  
-    // cross product
-    Vec3f u = Vec3f(vertecies[2].x - vertecies[0].x, vertecies[1].x - vertecies[0].x, vertecies[0].x - p.x)
-        ^ Vec3f(vertecies[2].y - vertecies[0].y, vertecies[1].y - vertecies[0].y, vertecies[0].y - p.y);
-    /* `pts` and `P` has integer value as coordinates
-       so `abs(u[2])` < 1 means `u[2]` is 0, that means
-       triangle is degenerate, in this case return something with negative coordinates */
-    if (std::abs(u.z) < 1) return Vec3f(-1, 1, 1);
-    return Vec3f(1.f - (u.x + u.y) / u.z, u.y / u.z, u.x / u.z);
+// 3D model
+void Draw::drawTriangle(Vec3f v0, Vec3f v1, Vec3f v2, TGAImage& image, const TGAColor& color, float* zBuffer)
+{
+	// checking if a poin is in triangle/bounding box
+	// 0 = P(barycenter)A + uAB + vAC // position of the point
+	// https://www.youtube.com/watch?v=HYAgJN3x4GA&ab_channel=SebastianLague
+
+	std::vector<Vec3f> vertices = { v0, v1, v2 };
+	// step1 form bounding box
+	Vec2f bboxmin(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+	Vec2f bboxmax(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
+	Vec2f clamp(image.get_width() - 1, image.get_height() - 1);
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 2; j++)
+		{
+			bboxmin[j] = std::max(0.f, std::min(bboxmin[j], vertices[i][j]));
+			bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], vertices[i][j]));
+		}
+	}
+	// step2 go through all the points in the box, determine if a point is inside the triangle and fill in the color
+	Vec3f P;
+	for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++)
+	{
+		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++)
+		{
+			Vec3f bc_screen = Helper::barycentric(vertices, P);
+			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0) continue;
+			P.z = 0;
+			for (int i = 0; i < 3; i++) P.z += vertices[i][2] * bc_screen[i];
+			if (zBuffer[int(P.x + P.y * image.get_width())] < P.z)
+			{
+                zBuffer[int(P.x + P.y * image.get_width())] = P.z;
+				image.set(P.x, P.y, color);
+			}
+		}
+	}
 }
 
-void Draw::drawTriangle(Vec2i v0, Vec2i v1, Vec2i v2, TGAImage& image, const TGAColor& color)
+void Draw::visulizeYBuffer(Vec2f p0, Vec2f p1, TGAImage& image, int yBuffer[])
 {
-    // checking if a poin is in triangle/bounding box
-    // 0 = P(barycenter)A + uAB + vAC // position of the point
-    // https://www.youtube.com/watch?v=HYAgJN3x4GA&ab_channel=SebastianLague
-
-    std::vector<Vec2i> vertices = { v0, v1, v2 };
-    // step1 form bounding box
-    Vec2i bboxMin;
-    Vec2i bboxMax;
-    Vec2i imageBB = Vec2i(image.get_width() - 1, image.get_height() - 1);
-    for (int i = 0; i < 3; ++i)
+    if (p0.x > p1.y)
     {
-        bboxMin.x = std::max(0, std::min(vertices[i].x, bboxMin.x));
-        bboxMin.y = std::max(0, std::min(vertices[i].y, bboxMin.y));
-
-        bboxMax.x = std::min(imageBB.x, std::max(vertices[i].x, bboxMax.x));
-        bboxMax.y = std::min(imageBB.y, std::max(vertices[i].y, bboxMax.y));
+        std::swap(p0, p1);
     }
-    // step2 go through all the points in the box, determine if a point is inside the triangle and fill in the color
-    Vec2i p;
-    for (p.x = bboxMin.x; p.x <= bboxMax.x; ++p.x)
+    for (int x = p0.x; x <= p1.x; ++x)
     {
-        for (p.y = bboxMin.y; p.y <= bboxMax.y; ++p.y)
+        float t = (x - p0.x) / (float)(p1.x - p0.x);
+        // current y depth. opposite of z test
+        int y = p0.y * (1.0f - t) + p1.y * t;
+        if (yBuffer[x] < y)
         {
-            Vec3f weights = Draw::barycentric(vertices, p);
-            if (weights.x < 0 || weights.y < 0 || weights.z < 0) continue;
-            else
-            {
-                image.set(p.x, p.y, color);
-            }
+            //yBuffer[x] = y;
+            image.set(x, 0, TGAColor(y, y, y, 1));
         }
     }
 }
