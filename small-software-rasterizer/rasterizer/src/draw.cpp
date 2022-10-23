@@ -2,7 +2,7 @@
 #include <helper.h>
 
 
-void Draw::drawLine(Vec2f v0, Vec2f v1, TGAImage& image, const TGAColor& color)
+void Draw::drawLine(vec2f v0, vec2f v1, TGAImage& image, const TGAColor& color)
 {
     bool steep = false;
     if (std::abs(v0.x - v1.x) < std::abs(v0.y - v1.y)) 
@@ -29,7 +29,7 @@ void Draw::drawLine(Vec2f v0, Vec2f v1, TGAImage& image, const TGAColor& color)
     }
 }
 
-void Draw::drawTriangleSweeping(Vec2f v0, Vec2f v1, Vec2f v2, TGAImage& image, const TGAColor& color)
+void Draw::drawTriangleSweeping(vec2f v0, vec2f v1, vec2f v2, TGAImage& image, const TGAColor& color)
 {
     // method 1 sweeping
     // how to fill triangles
@@ -76,15 +76,15 @@ void Draw::drawTriangleSweeping(Vec2f v0, Vec2f v1, Vec2f v2, TGAImage& image, c
 }
 
 // 3D model
-void Draw::drawTriangle(Vec3f* pts, TGAImage& image, const TGAColor& color, float* zBuffer)
+void Draw::drawTriangle(vec4f* pts, vec2f* uvs, vec3f* normals, TGAImage& image, TGAImage& texture, const vec3f lightDir, TGAImage& zBuffer)
 {
 	// checking if a poin is in triangle/bounding box
 	// 0 = P(barycenter)A + uAB + vAC // position of the point
 	// https://www.youtube.com/watch?v=HYAgJN3x4GA&ab_channel=SebastianLague
 
-	Vec2f bboxmin(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
-	Vec2f bboxmax(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
-	Vec2f clamp(image.get_width() - 1, image.get_height() - 1);
+	vec2f bboxmin(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+	vec2f bboxmax(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
+	vec2f clamp(image.get_width() - 1, image.get_height() - 1);
 	for (int i = 0; i < 3; i++)
 	{
 		for (int j = 0; j < 2; j++)
@@ -94,25 +94,48 @@ void Draw::drawTriangle(Vec3f* pts, TGAImage& image, const TGAColor& color, floa
 		}
 	}
 	// step2 go through all the points in the box, determine if a point is inside the triangle and fill in the color
-	Vec3f P;
+	vec3f P;
 	for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++)
 	{
 		for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++)
 		{
-			Vec3f bc_screen = Helper::barycentric(pts, P);
-			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0) continue;
+			vec3f bc_screen = Helper::barycentric(proj<2>(pts[0] / pts[0][3]), proj<2>(pts[1] / pts[1][3]), proj<2>(pts[2] / pts[2][3]), proj<2>(P));
+
+			float z = pts[0][2] * bc_screen.x + pts[1][2] * bc_screen.y + pts[2][2] * bc_screen.z;
+			float w = pts[0][3] * bc_screen.x + pts[1][3] * bc_screen.y + pts[2][3] * bc_screen.z;
+            int frag_depth = std::max(0, std::min(255, int(z / w + .5)));
+			if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 || zBuffer.get(P.x, P.y)[0] > frag_depth) continue;
 			P.z = 0;
-			for (int i = 0; i < 3; i++) P.z += pts[i][2] * bc_screen[i];
-			if (zBuffer[int(P.x + P.y * image.get_width())] < P.z)
-			{
-                zBuffer[int(P.x + P.y * image.get_width())] = P.z;
-				image.set(P.x, P.y, color);
-			}
+            vec2f uv;
+            vec3f n;
+            for (int i = 0; i < 3; i++) 
+            {
+                // calculate interpolated depth
+                P.z += pts[i][2] * bc_screen[i];
+
+                // calculate interpolated uv
+				uv.x += uvs[i][0] * bc_screen[i];
+				uv.y += uvs[i][1] * bc_screen[i];
+
+                // calculate interpolated normal 
+                n.x += normals[i][0] * bc_screen[i];
+                n.y += normals[i][1] * bc_screen[i];
+                n.z += normals[i][2] * bc_screen[i];
+            }
+            n = n.normalize();
+            // opposite z testing
+            // texture color
+            TGAColor texColor = texture.get(uv.x * texture.get_width(), uv.y * texture.get_height());
+            // lighting
+            float intensity = n * lightDir;
+			image.set(P.x, P.y, texColor * intensity);
+            zBuffer.set(P.x, P.y, P.z);
+
 		}
 	}
 }
 
-void Draw::visulizeYBuffer(Vec2f p0, Vec2f p1, TGAImage& image, int yBuffer[])
+void Draw::visulizeYBuffer(vec2f p0, vec2f p1, TGAImage& image, int yBuffer[])
 {
     if (p0.x > p1.y)
     {

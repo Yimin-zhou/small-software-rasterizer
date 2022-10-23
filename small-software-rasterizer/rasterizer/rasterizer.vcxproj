@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\draw.cpp" />
+    <ClCompile Include="src\geometry.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\model.cpp" />
     <ClCompile Include="src\tgaimage.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="include\draw.h" />
     <ClInclude Include="include\geometry.h" />
     <ClInclude Include="include\helper.h" />
+    <ClInclude Include="include\matrix.h" />
     <ClInclude Include="include\model.h" />
     <ClInclude Include="include\render.h" />
     <ClInclude Include="include\tgaimage.h" />
