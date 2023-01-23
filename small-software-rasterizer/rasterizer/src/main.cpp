@@ -11,7 +11,7 @@ const TGAColor GREEN = TGAColor(0, 255, 0, 255);
 const int width = 800;
 const int height = 800;
 
-Model* model = NULL;
+Model* model = nullptr;
 vec3f light_dir(0, 0, 1); // define light_dir
 vec3f camera(1, 1, 3);
 vec3f center(0, 0, 0); // in camera space
